@@ -1,0 +1,64 @@
+package secondriver.hession.client;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.util.List;
+
+import secondriver.hession.api.HelloHession;
+import secondriver.hession.api.bean.Person;
+
+import com.caucho.hessian.client.HessianProxyFactory;
+
+public class HelloHessionClient {
+
+	public static void main(String[] args) throws MalformedURLException {
+
+		HessianProxyFactory factory = new HessianProxyFactory();
+		// 开启方法重载
+		factory.setOverloadEnabled(true);
+
+		String urlName = "http://localhost:8080/hession-server/HelloHession";
+		HelloHession helloHession = (HelloHession) factory.create(
+				HelloHession.class, urlName);
+
+		// 调用方法
+		System.out.println("call sayHello():" + helloHession.sayHello());
+		System.out.println("call sayHello(\"Tom\"):"
+				+ helloHession.sayHello("Tom"));
+		System.out.println("call getPersons():");
+
+		// 调用方法获取集合对象
+		List<Person> persons = helloHession.getPersons();
+		if (null != persons && persons.size() > 0) {
+			for (Person p : persons) {
+				System.out.println(p.toString());
+			}
+		} else {
+			System.out.println("No person.");
+		}
+
+		// 通过参数调用方法获取对象
+		int id = 2;
+		System.out.println(String.format("call getPersonById(%d)", id));
+		Person person = helloHession.getPersonById(id);
+		if (null != person) {
+			System.out.println(person.toString());
+		} else {
+			System.out.println("Id is " + id + " person not exist.");
+		}
+
+		// 上传文件
+		String fileName = "upload.txt";
+		String filePath = System.getProperty("user.dir") + "/temp/" + fileName;
+		InputStream data;
+		try {
+			data = new BufferedInputStream(new FileInputStream(filePath));
+			helloHession.uploadFile(fileName, data);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+}
